@@ -60,12 +60,12 @@ jobs:
         run: |
           # Get current date in YYYY/MM/DD format
           CURRENT_DATE=$(date +"%Y/%m/%d")
-          
+
           # Update README.md with new version information
-          sed -i "0,/\* [0-9]\{4\}\/[0-9]\{2\}\/[0-9]\{2\}: updated to Proton Mail Bridge v[0-9]\+\.[0-9]\+\.[0-9]\+/s/\* [0-9]\{4\}\/[0-9]\{2\}\/[0-9]\{2\}: updated to Proton Mail Bridge v[0-9]\+\.[0-9]\+\.[0-9]\+/\* $CURRENT_DATE: updated to Proton Mail Bridge ${{ steps.get-version.outputs.version }}/" README.md
-          
+          sed -i "0,/\* [0-9]\{4\}\/[0-9]\{2\}\/[0-9]\{2\}: updated to Proton Mail Bridge v[0-9]\+\.[0-9]\+\.[0-9]\+/s|\* [0-9]\{4\}\/[0-9]\{2\}\/[0-9]\{2\}: updated to Proton Mail Bridge v[0-9]\+\.[0-9]\+\.[0-9]\+|\* $CURRENT_DATE: updated to Proton Mail Bridge ${{ steps.get-version.outputs.version }}|" README.md
+
           # Update Alpine README.md with new version information
-          sed -i "0,/\* [0-9]\{4\}\/[0-9]\{2\}\/[0-9]\{2\}: updated to Proton Mail Bridge v[0-9]\+\.[0-9]\+\.[0-9]\+/s/\* [0-9]\{4\}\/[0-9]\{2\}\/[0-9]\{2\}: updated to Proton Mail Bridge v[0-9]\+\.[0-9]\+\.[0-9]\+/\* $CURRENT_DATE: updated to Proton Mail Bridge ${{ steps.get-version.outputs.version }}/" Alpine/README.md
+          sed -i "0,/\* [0-9]\{4\}\/[0-9]\{2\}\/[0-9]\{2\}: updated to Proton Mail Bridge v[0-9]\+\.[0-9]\+\.[0-9]\+/s|\* [0-9]\{4\}\/[0-9]\{2\}\/[0-9]\{2\}: updated to Proton Mail Bridge v[0-9]\+\.[0-9]\+\.[0-9]\+|\* $CURRENT_DATE: updated to Proton Mail Bridge ${{ steps.get-version.outputs.version }}|" Alpine/README.md
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5

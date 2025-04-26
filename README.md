@@ -11,20 +11,20 @@ _(Merci [Korben](https://korben.info/) pour le logo)_
 
 Download the latest docker image from GitHub Container Registry:
 ```bash
-docker pull ghcr.io/asyncura/proton-mail-bridge:latest
+docker pull ghcr.io/asyncura/proton-mail-bridge:latest  # Debian version (default)
 ```
 Or from DockerHub:
 ```bash
-docker pull asyncura/proton-mail-bridge:latest
+docker pull asyncura/proton-mail-bridge:latest  # Debian version (default)
 ```
 
 **(Alternative)** Or the lightweight version based on Alpine Linux from GitHub Container Registry:
 ```bash
-docker pull ghcr.io/asyncura/proton-mail-bridge-alpine:latest
+docker pull ghcr.io/asyncura/proton-mail-bridge:alpine
 ```
 Or from DockerHub:
 ```bash
-docker pull asyncura/proton-mail-bridge-alpine:latest
+docker pull asyncura/proton-mail-bridge:alpine
 ```
 **(Optional)** It is recommended to set up a custom docker network for all of your containers to use, for DNS / network-alias resolution:
 ```bash
@@ -66,7 +66,7 @@ docker exec -it protonmail_bridge /bin/bash
 ```
 **OR** for the Alpine version:
 ```bash
-docker exec -it protonmail_bridge_alpine /bin/bash
+docker exec -it protonmail_bridge /bin/bash  # If you're using the Alpine tag
 ```
 ```
 # First we need to kill the default bridge startup instance (only one instance of bridge can run at the same time)
@@ -217,7 +217,9 @@ This repository uses GitHub Actions to automatically build and push Docker image
 1. Runs daily at midnight
 2. Fetches the latest version of Proton Mail Bridge from the GitHub API
 3. Builds both Debian and Alpine Docker images
-4. Tags them with both "latest" and the specific version number
+4. Tags them appropriately:
+   - Debian: `latest`, `debian`, `<version>`, `<version>-debian`
+   - Alpine: `alpine`, `<version>-alpine`
 5. Pushes them to ghcr.io and DockerHub (using GitHub secrets for DockerHub authentication)
 6. Updates the README.md files with the new version information
 
@@ -283,7 +285,7 @@ nslookup protonmail-bridge-ix-chart.ix-protonmail-bridge.svc.cluster.local 172.1
 
 There is a [testing branch](https://github.com/asyncura/ProtonMailBridgeDocker/tree/testing) available if you want to submit a patch.
 
-An [Alpine Linux](https://www.alpinelinux.org/) version for a small image base footprint is available in the [Alpine directory](https://github.com/asyncura/ProtonMailBridgeDocker/tree/master/Alpine).
+An [Alpine Linux](https://www.alpinelinux.org/) version for a small image base footprint is available using the `alpine` tag. The source code for the Alpine version is in the [Alpine directory](https://github.com/asyncura/ProtonMailBridgeDocker/tree/master/Alpine).
 
 ## License
 

@@ -12,7 +12,7 @@ services:
         networks:
             - network20
         restart: unless-stopped
-        image: ghcr.io/asyncura/proton-mail-bridge-alpine:latest
+        image: ghcr.io/asyncura/proton-mail-bridge:alpine
 networks:
     network20:
         external: true

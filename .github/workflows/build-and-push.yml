@@ -49,9 +49,13 @@ jobs:
             ENV_PROTONMAIL_BRIDGE_VERSION=${{ steps.get-version.outputs.version }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/proton-mail-bridge:latest
+            ghcr.io/${{ github.repository_owner }}/proton-mail-bridge:debian
             ghcr.io/${{ github.repository_owner }}/proton-mail-bridge:${{ steps.get-version.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/proton-mail-bridge:${{ steps.get-version.outputs.version }}-debian
             ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge:debian
             ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge:${{ steps.get-version.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge:${{ steps.get-version.outputs.version }}-debian
 
       - name: Build and push Alpine image
         uses: docker/build-push-action@v5
@@ -61,10 +65,10 @@ jobs:
           build-args: |
             ENV_PROTONMAIL_BRIDGE_VERSION=${{ steps.get-version.outputs.version }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/proton-mail-bridge-alpine:latest
-            ghcr.io/${{ github.repository_owner }}/proton-mail-bridge-alpine:${{ steps.get-version.outputs.version }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge-alpine:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge-alpine:${{ steps.get-version.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/proton-mail-bridge:alpine
+            ghcr.io/${{ github.repository_owner }}/proton-mail-bridge:${{ steps.get-version.outputs.version }}-alpine
+            ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge:alpine
+            ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge:${{ steps.get-version.outputs.version }}-alpine
 
       - name: Update README with new version
         run: |

@@ -9,13 +9,22 @@ _(Merci [Korben](https://korben.info/) pour le logo)_
 
 ## Install
 
-Download the latest docker image from:
+Download the latest docker image from GitHub Container Registry:
 ```bash
 docker pull ghcr.io/asyncura/proton-mail-bridge:latest
 ```
-**(Alternative)** Or the lightweight version based on Alpine Linux:
+Or from DockerHub:
+```bash
+docker pull asyncura/proton-mail-bridge:latest
+```
+
+**(Alternative)** Or the lightweight version based on Alpine Linux from GitHub Container Registry:
 ```bash
 docker pull ghcr.io/asyncura/proton-mail-bridge-alpine:latest
+```
+Or from DockerHub:
+```bash
+docker pull asyncura/proton-mail-bridge-alpine:latest
 ```
 **(Optional)** It is recommended to set up a custom docker network for all of your containers to use, for DNS / network-alias resolution:
 ```bash
@@ -204,12 +213,12 @@ The SMTP server is now available from TCP port 12025 on your server's LAN IP add
 ## Developers notes
 
 ### Automated Builds
-This repository uses GitHub Actions to automatically build and push Docker images to GitHub Container Registry (ghcr.io). The workflow:
+This repository uses GitHub Actions to automatically build and push Docker images to both GitHub Container Registry (ghcr.io) and DockerHub. The workflow:
 1. Runs daily at midnight
 2. Fetches the latest version of Proton Mail Bridge from the GitHub API
 3. Builds both Debian and Alpine Docker images
 4. Tags them with both "latest" and the specific version number
-5. Pushes them to ghcr.io
+5. Pushes them to ghcr.io and DockerHub (using GitHub secrets for DockerHub authentication)
 6. Updates the README.md files with the new version information
 
 ### Manual Builds

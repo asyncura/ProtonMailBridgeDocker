@@ -26,6 +26,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Get latest Proton Mail Bridge version
         id: get-version
         run: |
@@ -44,6 +50,8 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/proton-mail-bridge:latest
             ghcr.io/${{ github.repository_owner }}/proton-mail-bridge:${{ steps.get-version.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge:${{ steps.get-version.outputs.version }}
 
       - name: Build and push Alpine image
         uses: docker/build-push-action@v5
@@ -55,6 +63,8 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/proton-mail-bridge-alpine:latest
             ghcr.io/${{ github.repository_owner }}/proton-mail-bridge-alpine:${{ steps.get-version.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge-alpine:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge-alpine:${{ steps.get-version.outputs.version }}
 
       - name: Update README with new version
         run: |

@@ -2,9 +2,9 @@
 
 set -ex
 
-VERSION=$(cat VERSION)
+# VERSION is now passed as an environment variable during build
 
-echo "Welcome to my Proton Mail Bridge docker container ${VERSION} !"
+echo "Welcome to my Proton Mail Bridge docker container ${ENV_PROTONMAIL_BRIDGE_VERSION:-unknown} !"
 echo "Copyright (C) 2024  David BASTIEN - See /app/LICENSE.txt "
 
 # Check if the gpg key exist, if not created it. Should be run only on first launch.

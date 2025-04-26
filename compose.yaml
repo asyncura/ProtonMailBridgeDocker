@@ -7,12 +7,12 @@ services:
             - CONTAINER_SMTP_PORT=25
             - CONTAINER_IMAP_PORT=143
         ports:
-            - 127.0.0.1:12025:25/tcp
-            - 127.0.0.1:12143:143/tcp
+            - "127.0.0.1:12025:25/tcp"
+            - "127.0.0.1:12143:143/tcp"
         networks:
             - network20
         restart: unless-stopped
-        image: ghcr.io/videocurio/proton-mail-bridge:latest
+        image: ghcr.io/asyncura/proton-mail-bridge:latest
 networks:
     network20:
         external: true

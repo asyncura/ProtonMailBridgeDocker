@@ -1,6 +1,26 @@
 #!/usr/bin/env bash
 
-PROTONMAIL_BRIDGE_VERSION=$(cat VERSION)
+# Get the latest version from the Proton Mail Bridge GitHub repository
+PROTONMAIL_BRIDGE_VERSION=$(curl -s https://api.github.com/repos/ProtonMail/proton-bridge/releases/latest | grep -Po '"tag_name": "\K.*?(?=")')
+
+if [ -z "$PROTONMAIL_BRIDGE_VERSION" ]; then
+  echo "Error: Could not determine the latest Proton Mail Bridge version."
+  echo "Please specify a version manually with the -v flag."
+  exit 1
+fi
+
+# Allow overriding the version with a command-line argument
+while getopts "v:" opt; do
+  case $opt in
+    v)
+      PROTONMAIL_BRIDGE_VERSION=$OPTARG
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
 
 echo "Building Proton Mail Bridge docker images ${PROTONMAIL_BRIDGE_VERSION} !"
 
@@ -13,17 +33,16 @@ docker pull golang:1.23-alpine
 printf "\e[32m================================\e[0m \n"
 printf "\e[32m================================\e[0m \n"
 echo "Building Debian image..."
-docker build --build-arg ENV_PROTONMAIL_BRIDGE_VERSION="$PROTONMAIL_BRIDGE_VERSION" --tag=ghcr.io/videocurio/proton-mail-bridge .
-docker image tag ghcr.io/videocurio/proton-mail-bridge:latest ghcr.io/videocurio/proton-mail-bridge:"$PROTONMAIL_BRIDGE_VERSION"
+docker build --build-arg ENV_PROTONMAIL_BRIDGE_VERSION="$PROTONMAIL_BRIDGE_VERSION" --tag=ghcr.io/asyncura/proton-mail-bridge .
+docker image tag ghcr.io/asyncura/proton-mail-bridge:latest ghcr.io/asyncura/proton-mail-bridge:"$PROTONMAIL_BRIDGE_VERSION"
 
 printf "\e[32m================================\e[0m \n"
 printf "\e[32m================================\e[0m \n"
 echo "Building Alpine image..."
 cd Alpine/ || exit
-cp ../VERSION VERSION
 
-docker build --build-arg ENV_PROTONMAIL_BRIDGE_VERSION="$PROTONMAIL_BRIDGE_VERSION" --tag=ghcr.io/videocurio/proton-mail-bridge-alpine .
-docker image tag ghcr.io/videocurio/proton-mail-bridge-alpine:latest ghcr.io/videocurio/proton-mail-bridge-alpine:"$PROTONMAIL_BRIDGE_VERSION"
+docker build --build-arg ENV_PROTONMAIL_BRIDGE_VERSION="$PROTONMAIL_BRIDGE_VERSION" --tag=ghcr.io/asyncura/proton-mail-bridge-alpine .
+docker image tag ghcr.io/asyncura/proton-mail-bridge-alpine:latest ghcr.io/asyncura/proton-mail-bridge-alpine:"$PROTONMAIL_BRIDGE_VERSION"
 
 printf "\e[32m================================\e[0m \n"
 printf "\e[32m================================\e[0m \n"
@@ -42,10 +61,10 @@ read -p "Push docker images to ghcr.io ? (y/n) " yn
 
 case $yn in
   [yY] ) echo "Uploading docker images...";
-    docker push ghcr.io/videocurio/proton-mail-bridge:"$PROTONMAIL_BRIDGE_VERSION";
-    docker push ghcr.io/videocurio/proton-mail-bridge:latest;
-    docker push ghcr.io/videocurio/proton-mail-bridge-alpine:"$PROTONMAIL_BRIDGE_VERSION";
-    docker push ghcr.io/videocurio/proton-mail-bridge-alpine:latest;
+    docker push ghcr.io/asyncura/proton-mail-bridge:"$PROTONMAIL_BRIDGE_VERSION";
+    docker push ghcr.io/asyncura/proton-mail-bridge:latest;
+    docker push ghcr.io/asyncura/proton-mail-bridge-alpine:"$PROTONMAIL_BRIDGE_VERSION";
+    docker push ghcr.io/asyncura/proton-mail-bridge-alpine:latest;
     break;;
   [nN] ) echo "Exiting...";
     exit;;

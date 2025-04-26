@@ -2,20 +2,20 @@
 
 A docker version of the [Proton mail Bridge](https://proton.me/mail/bridge) command line interface. It creates a local SMTP server, so other docker containers can send emails via your Proton email account.
 
-__!WARNING!__ As of the time of this writing, you need a paid plan (Mail Plus, Proton Unlimited or Proton for Business) to be able to log in. It won't work for free account.
+__!WARNING!__ As of the time of this writing, you need a paid plan (Mail Plus, Proton Unlimited or Proton for Business) to be able to log in. It won't work with a free account.
 
-![Logo Proton Mail Bridge docker](https://raw.githubusercontent.com/VideoCurio/ProtonMailBridgeDocker/master/logo.png "Merci à Korben pour le logo!")
+![Logo Proton Mail Bridge docker](https://raw.githubusercontent.com/asyncura/ProtonMailBridgeDocker/master/logo.png "Merci à Korben pour le logo!")
 _(Merci [Korben](https://korben.info/) pour le logo)_
 
 ## Install
 
 Download the latest docker image from:
 ```bash
-docker pull ghcr.io/videocurio/proton-mail-bridge:latest
+docker pull ghcr.io/asyncura/proton-mail-bridge:latest
 ```
 **(Alternative)** Or the lightweight version based on Alpine Linux:
 ```bash
-docker pull ghcr.io/videocurio/proton-mail-bridge-alpine:latest
+docker pull ghcr.io/asyncura/proton-mail-bridge-alpine:latest
 ```
 **(Optional)** It is recommended to set up a custom docker network for all of your containers to use, for DNS / network-alias resolution:
 ```bash
@@ -25,11 +25,11 @@ sudo docker network create --subnet 172.20.0.0/16 network20
 Launch it with the following command to expose TCP ports 12025 for SMTP and 12143 for IMAP on your local network interface.
 **_You MUST provide a path volume storage_** (`mkdir /path/to/your/volume/storage`).
 ```bash
-docker run -d --name=protonmail_bridge -v /path/to/your/volume/storage:/root -p 127.0.0.1:12025:25/tcp -p 127.0.0.1:12143:143/tcp --network network20 --restart=unless-stopped ghcr.io/videocurio/proton-mail-bridge:latest
+docker run -d --name=protonmail_bridge -v /path/to/your/volume/storage:/root -p 127.0.0.1:12025:25/tcp -p 127.0.0.1:12143:143/tcp --network network20 --restart=unless-stopped ghcr.io/asyncura/proton-mail-bridge:latest
 ```
 **OR** (docker compose version):
 ```bash
-wget https://raw.githubusercontent.com/VideoCurio/ProtonMailBridgeDocker/master/compose.yaml
+wget https://raw.githubusercontent.com/asyncura/ProtonMailBridgeDocker/master/compose.yaml
 docker-compose up -d
 ```
 
@@ -37,7 +37,7 @@ docker-compose up -d
 ```bash
 docker ps
 CONTAINER ID   IMAGE                                          COMMAND                  CREATED              STATUS              PORTS                                                  NAMES
-d9932fb7136b   ghcr.io/videocurio/proton-mail-bridge:latest   "/app/entrypoint.sh"     About a minute ago   Up About a minute   127.0.0.1:12025->25/tcp, 127.0.0.1:12143->143/tcp   protonmail_bridge
+d9932fb7136b   ghcr.io/asyncura/proton-mail-bridge:latest   "/app/entrypoint.sh"     About a minute ago   Up About a minute   127.0.0.1:12025->25/tcp, 127.0.0.1:12143->143/tcp   protonmail_bridge
 ```
 
 **(Optional)** You can check the bridge command line output with, you should see a bridge in ASCII art:
@@ -155,11 +155,11 @@ It should end with `A sync has finished for name_of_your_account`
 
 ### TrueNAS Scale 24.10 or superior (TrueNAS apps as docker containers)
 The docker image was tested on the latest stable version of [TrueNAS Scale](https://www.truenas.com/truenas-scale/) 24.10 (at the time of writing),
-follow the [installation custom app screen](https://www.truenas.com/docs/truenasapps/usingcustomapp/) documentation.
+ following the [installation custom app screen](https://www.truenas.com/docs/truenasapps/usingcustomapp/) documentation.
 You should define a [Dataset](https://www.truenas.com/docs/scale/24.10/scaleuireference/datasets/) to save your Proton mail data before installing the app.
 
 The recommended parameters are:
-1. **Image Configuration** - Image repository: `ghcr.io/videocurio/proton-mail-bridge` / Image tag: `latest` / Pull policy: `Always pull...`
+1. **Image Configuration** - Image repository: `ghcr.io/asyncura/proton-mail-bridge` / Image tag: `latest` / Pull policy: `Always pull...`
 2. **Container Configuration** - Entrypoint: `/app/entrypoint.sh` / Restart Policy: `Unless stopped`
 3. **Network Configuration** - Add > Container Port: `25` / Host Port: `12025` (Or any other non-used port) / Protocol: `TCP`
 4. **Storage Configuration** - Storage Add > Type: `Host path` / Mount Path: `/root` / Host path: `/mnt/path/to/your/protonmail-dataset` 
@@ -167,17 +167,17 @@ The recommended parameters are:
 
 ### TrueNAS Scale 24.04 or inferior (TrueNAS apps as Kubernetes)
 The docker image was tested on the latest stable version of [TrueNAS Scale](https://www.truenas.com/truenas-scale/) (at the time of writing),
-follow the [installation custom app screen](https://www.truenas.com/docs/scale/scaleuireference/apps/installcustomappscreens/) documentation.
+ following the [installation custom app screen](https://www.truenas.com/docs/scale/scaleuireference/apps/installcustomappscreens/) documentation.
 
 The recommended parameters are:
-1. **Container images** - Image repository: `ghcr.io/videocurio/proton-mail-bridge` / Image tag: `latest` / Image pull policy: `Always pull...`
+1. **Container images** - Image repository: `ghcr.io/asyncura/proton-mail-bridge` / Image tag: `latest` / Image pull policy: `Always pull...`
 2. **Container Entrypoint** - Command: `/app/entrypoint.sh`
 3. **Container Environment Variables** - Add > Environment Variable Name: `PROTON_BRIDGE_SMTP_PORT` / Environment Variable Value: `1026`
 4. **Port Forwarding** - Add > Container Port: `25` / Node Port: `12025` (Or any other non-used port) / Protocol: `TCP`
 5. **Storage** - Volumes > Mount Path: `/root` / Dataset name: `protonmail` 
 6. **Resource limits** - `Check` Enable resource limits, configure the limits to your liking.
 
-About point 3 of the recommended parameters, on Kubernetes (used by TrueNAS Scale for Applications) the Proton Mail Bridge applications seems to listening on localhost TCP port 1026 instead of port 1025. In order to confirm this setting, launch a console on your running Proton Mail bridge pod and see the results of a `netstat -ltpn` command, you are looking for a `bridge` program name on `127.0.0.1:1026`address. 
+About point 3 of the recommended parameters, on Kubernetes (used by TrueNAS Scale for Applications) the Proton Mail Bridge application seems to listening on localhost TCP port 1026 instead of port 1025. To confirm this setting, launch a console on your running Proton Mail bridge pod and see the results of a `netstat -ltpn` command, you are looking for a `bridge` program name on `127.0.0.1:1026`address. 
 
 If everything is set correctly, on a TrueNAS Scale console the following command:
 ``` bash
@@ -203,22 +203,41 @@ The SMTP server is now available from TCP port 12025 on your server's LAN IP add
 
 ## Developers notes
 
-Build / test docker image, see: [Docker documentation](https://docs.docker.com/language/python/containerize/)
+### Automated Builds
+This repository uses GitHub Actions to automatically build and push Docker images to GitHub Container Registry (ghcr.io). The workflow:
+1. Runs daily at midnight
+2. Fetches the latest version of Proton Mail Bridge from the GitHub API
+3. Builds both Debian and Alpine Docker images
+4. Tags them with both "latest" and the specific version number
+5. Pushes them to ghcr.io
+6. Updates the README.md files with the new version information
+
+### Manual Builds
+For local development and testing, you can use the build.sh script:
+```bash
+# Build with the latest version from GitHub:
+./build.sh
+
+# Build with a specific version:
+./build.sh -v v3.19.0
+```
+
+For more details on Docker, see: [Docker documentation](https://docs.docker.com/language/python/containerize/)
 ```bash
 # Local tests:
 docker pull golang:bookworm
 
-git clone https://github.com/VideoCurio/ProtonMailBridgeDocker.git
+git clone https://github.com/asyncura/ProtonMailBridgeDocker.git
 cd /path/to/ProtonMailBridgeDocker/
-docker build --tag=ghcr.io/videocurio/proton-mail-bridge .
+docker build --build-arg ENV_PROTONMAIL_BRIDGE_VERSION=v3.19.0 --tag=ghcr.io/asyncura/proton-mail-bridge .
 docker images | grep proton-mail
 
-docker run -it --rm --entrypoint /bin/bash ghcr.io/videocurio/proton-mail-bridge:latest
+docker run -it --rm --entrypoint /bin/bash ghcr.io/asyncura/proton-mail-bridge:latest
 # (Optional) It is recommended to set up a custom docker network for all of your containers to use, for DNS / network-alias resolution:
 sudo docker network create --subnet 172.20.0.0/16 network20
 
 mkdir /path/to/your/volume/storage
-docker run -d --name=protonmail_bridge -v /path/to/your/volume/storage:/root -p 127.0.0.1:14025:25/tcp -p 127.0.0.1:14143:143/tcp --network network20 --restart=unless-stopped ghcr.io/videocurio/proton-mail-bridge:latest
+docker run -d --name=protonmail_bridge -v /path/to/your/volume/storage:/root -p 127.0.0.1:14025:25/tcp -p 127.0.0.1:14143:143/tcp --network network20 --restart=unless-stopped ghcr.io/asyncura/proton-mail-bridge:latest
 docker container logs protonmail_bridge
 
 docker exec -it protonmail_bridge /bin/bash
@@ -229,7 +248,7 @@ root@8972584f86d4:/app# /app/bridge --cli
 # Testing the SMTP server with telnet:
 telnet 127.0.0.1 12025
 
-                  
+
 Trying 127.0.0.1...
 Connected to 127.0.0.1.
 Escape character is '^]'.
@@ -253,13 +272,13 @@ nslookup protonmail-bridge-ix-chart.ix-protonmail-bridge.svc.cluster.local 172.1
 
 ```
 
-There is a [testing branch](https://github.com/VideoCurio/ProtonMailBridgeDocker/tree/testing) available if you want to submit a patch.
+There is a [testing branch](https://github.com/asyncura/ProtonMailBridgeDocker/tree/testing) available if you want to submit a patch.
 
-An [Alpine Linux](https://www.alpinelinux.org/) version for a small image base footprint is available in the [Alpine directory](https://github.com/VideoCurio/ProtonMailBridgeDocker/tree/master/Alpine).
+An [Alpine Linux](https://www.alpinelinux.org/) version for a small image base footprint is available in the [Alpine directory](https://github.com/asyncura/ProtonMailBridgeDocker/tree/master/Alpine).
 
 ## License
 
-Copyright (C) 2024  David BASTIEN
+Copyright (C) 2024 David BASTIEN
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

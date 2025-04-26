@@ -1,3 +1,8 @@
 venv/
 
 .idea/
+.output.txt
+
+# Exclude VERSION files as they are no longer needed
+VERSION
+Alpine/VERSION

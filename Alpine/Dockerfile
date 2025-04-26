@@ -3,10 +3,9 @@ LABEL authors="David BASTIEN"
 ARG ENV_PROTONMAIL_BRIDGE_VERSION
 
 # Install dependencies
-RUN apk update
-RUN apk add bash
-RUN apk add make gcc g++ libc-dev musl musl-dev sed grep sed
-RUN apk add git libsecret libsecret-dev pass
+RUN apk --no-cache update && \
+    apk --no-cache add bash make gcc g++ libc-dev musl musl-dev sed grep \
+    git libsecret libsecret-dev pass
 
 # Build stage
 WORKDIR /build/
@@ -18,8 +17,10 @@ RUN make build-nogui
 
 # Working stage image
 FROM golang:alpine
-LABEL authors="David BASTIEN"
-LABEL org.opencontainers.image.source="https://github.com/asyncura/ProtonMailBridgeDocker"
+LABEL maintainer="David BASTIEN" \
+      version="$ENV_PROTONMAIL_BRIDGE_VERSION" \
+      description="ProtonMail Bridge in Docker" \
+      org.opencontainers.image.source="https://github.com/asyncura/ProtonMailBridgeDocker"
 
 # Define arguments and env variables
 # Indicate (NOT define) the ports/network interface really used by Proton bridge mail.
@@ -40,9 +41,9 @@ ENV CONTAINER_IMAP_PORT=$ENV_CONTAINER_IMAP_PORT
 ENV ENV_PROTONMAIL_BRIDGE_VERSION=$ENV_PROTONMAIL_BRIDGE_VERSION
 
 # Install dependencies
-RUN apk update
-RUN apk upgrade
-RUN apk add bash socat net-tools libsecret pass gpg gpg-agent ca-certificates
+RUN apk --no-cache update && \
+    apk --no-cache upgrade && \
+    apk --no-cache add bash socat net-tools libsecret pass gpg gpg-agent ca-certificates
 
 # RUN rc-update add dbus
 # RUN touch /run/openrc/softlevel
@@ -58,7 +59,6 @@ COPY entrypoint.sh /app/
 RUN chmod u+x /app/entrypoint.sh
 COPY GPGparams.txt /app/
 
-COPY LICENSE.txt /app/
 
 # SMTP and IMAP ports (25/tcp and 143/tcp) are not exposed by default, so you could adjust them if necessary with ENV
 # variables CONTAINER_SMTP_PORT and CONTAINER_IMAP_PORT.

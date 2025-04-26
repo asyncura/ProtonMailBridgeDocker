@@ -3,7 +3,11 @@ LABEL authors="David BASTIEN"
 ARG ENV_PROTONMAIL_BRIDGE_VERSION
 
 # Install dependencies
-RUN apt-get update && apt-get install -y git build-essential libsecret-1-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    build-essential \
+    libsecret-1-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Build stage
 WORKDIR /build/
@@ -13,8 +17,10 @@ RUN make build-nogui
 
 # Working stage image
 FROM golang:bookworm
-LABEL authors="David BASTIEN"
-LABEL org.opencontainers.image.source="https://github.com/asyncura/ProtonMailBridgeDocker"
+LABEL maintainer="David BASTIEN" \
+      version="$ENV_PROTONMAIL_BRIDGE_VERSION" \
+      description="ProtonMail Bridge in Docker" \
+      org.opencontainers.image.source="https://github.com/asyncura/ProtonMailBridgeDocker"
 
 # Define arguments and env variables
 # Indicate (NOT define) the ports/network interface really used by Proton bridge mail.
@@ -35,7 +41,14 @@ ENV CONTAINER_IMAP_PORT=$ENV_CONTAINER_IMAP_PORT
 ENV ENV_PROTONMAIL_BRIDGE_VERSION=$ENV_PROTONMAIL_BRIDGE_VERSION
 
 # Install dependencies
-RUN apt-get update && apt-get install -y bash socat net-tools pass ca-certificates libsecret-1-0
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    socat \
+    net-tools \
+    pass \
+    ca-certificates \
+    libsecret-1-0 \
+    && rm -rf /var/lib/apt/lists/*
 # Copy executables made during previous stage
 WORKDIR /app/
 COPY --from=build /build/proton-bridge/bridge /app/
@@ -46,7 +59,6 @@ COPY entrypoint.sh /app/
 RUN chmod u+x /app/entrypoint.sh
 COPY GPGparams.txt /app/
 
-COPY LICENSE.txt /app/
 
 # SMTP and IMAP ports (25/tcp and 143/tcp) are not exposed by default, so you could adjust them if necessary with ENV
 # variables CONTAINER_SMTP_PORT and CONTAINER_IMAP_PORT.

@@ -27,8 +27,8 @@ echo "Building Proton Mail Bridge docker images ${PROTONMAIL_BRIDGE_VERSION} !"
 printf "\e[32m================================\e[0m \n"
 printf "\e[32m================================\e[0m \n"
 echo "Updating sources images..."
-docker pull golang:bookworm
-docker pull golang:1.23-alpine
+docker pull golang:1.26-bookworm
+docker pull golang:1.26-alpine
 
 printf "\e[32m================================\e[0m \n"
 printf "\e[32m================================\e[0m \n"

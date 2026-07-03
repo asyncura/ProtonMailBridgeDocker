@@ -1,4 +1,4 @@
-FROM golang:bookworm AS build
+FROM golang:1.26-bookworm AS build
 LABEL authors="David BASTIEN"
 ARG ENV_PROTONMAIL_BRIDGE_VERSION
 
@@ -7,6 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     build-essential \
     libsecret-1-dev \
+    libfido2-dev \
+    libcbor-dev \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Build stage
@@ -16,7 +19,7 @@ WORKDIR /build/proton-bridge/
 RUN make build-nogui
 
 # Working stage image
-FROM golang:bookworm
+FROM golang:1.26-bookworm
 LABEL maintainer="David BASTIEN" \
       version="$ENV_PROTONMAIL_BRIDGE_VERSION" \
       description="ProtonMail Bridge in Docker" \
@@ -48,6 +51,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pass \
     ca-certificates \
     libsecret-1-0 \
+    libfido2-1 \
     && rm -rf /var/lib/apt/lists/*
 # Copy executables made during previous stage
 WORKDIR /app/

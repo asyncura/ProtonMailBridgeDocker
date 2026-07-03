@@ -1,11 +1,11 @@
-FROM golang:alpine AS build
+FROM golang:1.26-alpine AS build
 LABEL authors="David BASTIEN"
 ARG ENV_PROTONMAIL_BRIDGE_VERSION
 
 # Install dependencies
 RUN apk --no-cache update && \
     apk --no-cache add bash make gcc g++ libc-dev musl musl-dev sed grep \
-    git libsecret libsecret-dev pass
+    git libsecret libsecret-dev pass libfido2-dev libcbor-dev openssl-dev
 
 # Build stage
 WORKDIR /build/
@@ -16,7 +16,7 @@ WORKDIR /build/proton-bridge/
 RUN make build-nogui
 
 # Working stage image
-FROM golang:alpine
+FROM golang:1.26-alpine
 LABEL maintainer="David BASTIEN" \
       version="$ENV_PROTONMAIL_BRIDGE_VERSION" \
       description="ProtonMail Bridge in Docker" \
@@ -43,7 +43,7 @@ ENV ENV_PROTONMAIL_BRIDGE_VERSION=$ENV_PROTONMAIL_BRIDGE_VERSION
 # Install dependencies
 RUN apk --no-cache update && \
     apk --no-cache upgrade && \
-    apk --no-cache add bash socat net-tools libsecret pass gpg gpg-agent ca-certificates
+    apk --no-cache add bash socat net-tools libsecret pass gpg gpg-agent ca-certificates libfido2 libcbor
 
 # RUN rc-update add dbus
 # RUN touch /run/openrc/softlevel

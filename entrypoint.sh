@@ -43,13 +43,28 @@ BRIDGE_PID=$!
 
 # Forward container stop signals to the bridge and the socat forwarders for a
 # clean shutdown.
+KEEPALIVE_PID=""
 shutdown() {
   echo "Received stop signal, shutting down..."
-  kill "$BRIDGE_PID" "$SOCAT_SMTP_PID" "$SOCAT_IMAP_PID" 2>/dev/null || true
+  kill "$BRIDGE_PID" "$SOCAT_SMTP_PID" "$SOCAT_IMAP_PID" ${KEEPALIVE_PID:+"$KEEPALIVE_PID"} 2>/dev/null || true
+  wait "$BRIDGE_PID" 2>/dev/null || true
+  echo "Done."
+  exit 0
 }
 trap shutdown TERM INT
 
 wait "$BRIDGE_PID" || true
-shutdown
+
+# The bridge exited but the container was not stopped. This is expected during
+# the first-time setup: the user runs `pkill bridge` and then the interactive
+# `/app/bridge --cli` to log in (only one bridge instance can run at a time),
+# so keep the container alive instead of exiting.
+echo "Proton Mail Bridge exited. Keeping the container running for interactive setup:"
+echo "  docker exec -it <container> /bin/bash    then    /app/bridge --cli"
+echo "Restart the container to bring the supervised bridge back up."
+
+tail -f /dev/null &
+KEEPALIVE_PID=$!
+wait "$KEEPALIVE_PID" || true
 
 echo "Done."

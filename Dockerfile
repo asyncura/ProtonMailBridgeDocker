@@ -56,6 +56,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bash \
     socat \
     net-tools \
+    procps \
     pass \
     ca-certificates \
     libsecret-1-0 \

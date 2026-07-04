@@ -1,74 +1,78 @@
 #!/usr/bin/env bash
 
-# Get the latest version from the Proton Mail Bridge GitHub repository
-PROTONMAIL_BRIDGE_VERSION=$(curl -s https://api.github.com/repos/ProtonMail/proton-bridge/releases/latest | grep -Po '"tag_name": "\K.*?(?=")')
+set -euo pipefail
 
-if [ -z "$PROTONMAIL_BRIDGE_VERSION" ]; then
-  echo "Error: Could not determine the latest Proton Mail Bridge version."
-  echo "Please specify a version manually with the -v flag."
+PROTONMAIL_BRIDGE_VERSION=""
+PUSH=""
+
+usage() {
+  echo "Usage: $0 [-v version] [-p]"
+  echo "  -v  Proton Mail Bridge version to build (e.g. v3.25.0). Default: latest release."
+  echo "  -p  Push images to ghcr.io after building (no prompt)."
   exit 1
-fi
+}
 
-# Allow overriding the version with a command-line argument
-while getopts "v:" opt; do
+while getopts "v:ph" opt; do
   case $opt in
-    v)
-      PROTONMAIL_BRIDGE_VERSION=$OPTARG
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      exit 1
-      ;;
+    v) PROTONMAIL_BRIDGE_VERSION=$OPTARG ;;
+    p) PUSH="y" ;;
+    *) usage ;;
   esac
 done
+
+# Get the latest version from the Proton Mail Bridge GitHub repository if not given
+if [ -z "$PROTONMAIL_BRIDGE_VERSION" ]; then
+  PROTONMAIL_BRIDGE_VERSION=$(curl -s https://api.github.com/repos/ProtonMail/proton-bridge/releases/latest | grep -o '"tag_name": *"[^"]*"' | grep -o 'v[0-9.]*')
+  if [ -z "$PROTONMAIL_BRIDGE_VERSION" ]; then
+    echo "Error: Could not determine the latest Proton Mail Bridge version."
+    echo "Please specify a version manually with the -v flag."
+    exit 1
+  fi
+fi
+
+REGISTRY_IMAGE="ghcr.io/asyncura/proton-mail-bridge"
 
 echo "Building Proton Mail Bridge docker images ${PROTONMAIL_BRIDGE_VERSION} !"
 
 printf "\e[32m================================\e[0m \n"
-printf "\e[32m================================\e[0m \n"
-echo "Updating sources images..."
-docker pull golang:1.26-bookworm
-docker pull golang:1.26-alpine
-
-printf "\e[32m================================\e[0m \n"
-printf "\e[32m================================\e[0m \n"
 echo "Building Debian image..."
-docker build --build-arg ENV_PROTONMAIL_BRIDGE_VERSION="$PROTONMAIL_BRIDGE_VERSION" --tag=ghcr.io/asyncura/proton-mail-bridge .
-docker image tag ghcr.io/asyncura/proton-mail-bridge:latest ghcr.io/asyncura/proton-mail-bridge:"$PROTONMAIL_BRIDGE_VERSION"
+docker build \
+  --build-arg ENV_PROTONMAIL_BRIDGE_VERSION="$PROTONMAIL_BRIDGE_VERSION" \
+  --tag "$REGISTRY_IMAGE:latest" \
+  --tag "$REGISTRY_IMAGE:debian" \
+  --tag "$REGISTRY_IMAGE:$PROTONMAIL_BRIDGE_VERSION" \
+  --tag "$REGISTRY_IMAGE:$PROTONMAIL_BRIDGE_VERSION-debian" \
+  .
 
-printf "\e[32m================================\e[0m \n"
 printf "\e[32m================================\e[0m \n"
 echo "Building Alpine image..."
-cd Alpine/ || exit
+docker build \
+  --file Dockerfile.alpine \
+  --build-arg ENV_PROTONMAIL_BRIDGE_VERSION="$PROTONMAIL_BRIDGE_VERSION" \
+  --tag "$REGISTRY_IMAGE:alpine" \
+  --tag "$REGISTRY_IMAGE:$PROTONMAIL_BRIDGE_VERSION-alpine" \
+  .
 
-docker build --build-arg ENV_PROTONMAIL_BRIDGE_VERSION="$PROTONMAIL_BRIDGE_VERSION" --tag=ghcr.io/asyncura/proton-mail-bridge-alpine .
-docker image tag ghcr.io/asyncura/proton-mail-bridge-alpine:latest ghcr.io/asyncura/proton-mail-bridge-alpine:"$PROTONMAIL_BRIDGE_VERSION"
-
-printf "\e[32m================================\e[0m \n"
 printf "\e[32m================================\e[0m \n"
 echo "See results:"
-docker images | grep proton-mail
-
-# Tests images
-# docker stop protonmail_bridge && docker rm protonmail_bridge
-# docker stop protonmail_bridge_alpine && docker rm protonmail_bridge_alpine
+docker images "$REGISTRY_IMAGE"
 
 printf "\e[32m================================\e[0m \n"
-printf "\e[32m================================\e[0m \n"
-while true; do
+if [ -z "$PUSH" ]; then
+  read -r -p "Push docker images to ghcr.io ? (y/n) " PUSH
+fi
 
-read -p "Push docker images to ghcr.io ? (y/n) " yn
-
-case $yn in
-  [yY] ) echo "Uploading docker images...";
-    docker push ghcr.io/asyncura/proton-mail-bridge:"$PROTONMAIL_BRIDGE_VERSION";
-    docker push ghcr.io/asyncura/proton-mail-bridge:latest;
-    docker push ghcr.io/asyncura/proton-mail-bridge-alpine:"$PROTONMAIL_BRIDGE_VERSION";
-    docker push ghcr.io/asyncura/proton-mail-bridge-alpine:latest;
-    break;;
-  [nN] ) echo "Exiting...";
-    exit;;
-  * ) echo "Invalid response";;
+case $PUSH in
+  [yY])
+    echo "Uploading docker images..."
+    docker push "$REGISTRY_IMAGE:latest"
+    docker push "$REGISTRY_IMAGE:debian"
+    docker push "$REGISTRY_IMAGE:$PROTONMAIL_BRIDGE_VERSION"
+    docker push "$REGISTRY_IMAGE:$PROTONMAIL_BRIDGE_VERSION-debian"
+    docker push "$REGISTRY_IMAGE:alpine"
+    docker push "$REGISTRY_IMAGE:$PROTONMAIL_BRIDGE_VERSION-alpine"
+    ;;
+  *)
+    echo "Not pushing. Done."
+    ;;
 esac
-
-done

@@ -1,43 +1,55 @@
 #!/usr/bin/env bash
 
-set -ex
+set -euo pipefail
 
-# VERSION is now passed as an environment variable during build
+echo "Welcome to the Proton Mail Bridge docker container ${ENV_PROTONMAIL_BRIDGE_VERSION:-unknown} !"
+echo "Copyright (C) 2026  asyncura - See LICENSE.txt"
 
-echo "Welcome to my Proton Mail Bridge docker container ${ENV_PROTONMAIL_BRIDGE_VERSION:-unknown} !"
-echo "Copyright (C) 2024  David BASTIEN - See /app/LICENSE.txt "
+# Default values, overridable at `docker run` time.
+: "${PROTON_BRIDGE_SMTP_PORT:=1025}"
+: "${PROTON_BRIDGE_IMAP_PORT:=1143}"
+: "${PROTON_BRIDGE_HOST:=127.0.0.1}"
+: "${CONTAINER_SMTP_PORT:=25}"
+: "${CONTAINER_IMAP_PORT:=143}"
 
-# Check if the gpg key exist, if not created it. Should be run only on first launch.
+# On first launch, create a GPG key and initialize the pass password store
+# that the bridge uses to store its credentials.
 if [ ! -d "/root/.password-store/" ]; then
+  echo "First launch detected: initializing GPG key and password store..."
   gpg --generate-key --batch /app/GPGparams.txt
   gpg --list-keys
   pass init ProtonMailBridge
 fi
 
-# Check if some env variables exist.
-if ! [[ -v PROTON_BRIDGE_SMTP_PORT ]]; then
-  echo "WARNING! Environment variable PROTON_BRIDGE_SMTP_PORT is not defined!"
-fi
-if ! [[ -v PROTON_BRIDGE_IMAP_PORT ]]; then
-  echo "WARNING! Environment variable PROTON_BRIDGE_IMAP_PORT is not defined!"
-fi
-if ! [[ -v PROTON_BRIDGE_HOST ]]; then
-  echo "WARNING! Environment variable PROTON_BRIDGE_HOST is not defined!"
-fi
-if ! [[ -v CONTAINER_SMTP_PORT ]]; then
-  echo "WARNING! Environment variable CONTAINER_SMTP_PORT is not defined!"
-fi
-if ! [[ -v CONTAINER_IMAP_PORT ]]; then
-  echo "WARNING! Environment variable CONTAINER_IMAP_PORT is not defined!"
-fi
+# Proton Mail Bridge listens only on the 127.0.0.1 interface inside the
+# container, so we forward TCP traffic from all interfaces on the SMTP and
+# IMAP container ports.
+socat TCP-LISTEN:"$CONTAINER_SMTP_PORT",fork,reuseaddr TCP:"$PROTON_BRIDGE_HOST":"$PROTON_BRIDGE_SMTP_PORT" &
+SOCAT_SMTP_PID=$!
+socat TCP-LISTEN:"$CONTAINER_IMAP_PORT",fork,reuseaddr TCP:"$PROTON_BRIDGE_HOST":"$PROTON_BRIDGE_IMAP_PORT" &
+SOCAT_IMAP_PID=$!
 
-# Proton mail bridge listen only on 127.0.0.1 interface, we need to forward TCP traffic on SMTP and IMAP ports:
-socat TCP-LISTEN:"$CONTAINER_SMTP_PORT",fork TCP:"$PROTON_BRIDGE_HOST":"$PROTON_BRIDGE_SMTP_PORT" &
-socat TCP-LISTEN:"$CONTAINER_IMAP_PORT",fork TCP:"$PROTON_BRIDGE_HOST":"$PROTON_BRIDGE_IMAP_PORT" &
+echo "Forwarding 0.0.0.0:${CONTAINER_SMTP_PORT} -> ${PROTON_BRIDGE_HOST}:${PROTON_BRIDGE_SMTP_PORT} (SMTP)"
+echo "Forwarding 0.0.0.0:${CONTAINER_IMAP_PORT} -> ${PROTON_BRIDGE_HOST}:${PROTON_BRIDGE_IMAP_PORT} (IMAP)"
 
-# Start a default Proton Mail Bridge on a fake tty, so it won't stop because of EOF
-rm -f faketty
-mkfifo faketty
-cat faketty | /app/bridge --cli
+# Start the bridge CLI with its stdin on a fifo opened read-write: it never
+# receives EOF, so the bridge won't stop, and the open doesn't block waiting
+# for a writer.
+rm -f /app/faketty
+mkfifo /app/faketty
+
+/app/bridge --cli <> /app/faketty &
+BRIDGE_PID=$!
+
+# Forward container stop signals to the bridge and the socat forwarders for a
+# clean shutdown.
+shutdown() {
+  echo "Received stop signal, shutting down..."
+  kill "$BRIDGE_PID" "$SOCAT_SMTP_PID" "$SOCAT_IMAP_PID" 2>/dev/null || true
+}
+trap shutdown TERM INT
+
+wait "$BRIDGE_PID" || true
+shutdown
 
 echo "Done."

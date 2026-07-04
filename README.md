@@ -2,6 +2,8 @@
 
 An always-up-to-date docker version of the [Proton mail Bridge](https://proton.me/mail/bridge) command line interface. It creates a local SMTP server, so other docker containers can send emails via your Proton email account.
 
+Images are built for `linux/amd64` and `linux/arm64`, in two flavours: Debian (default, `latest`/`debian` tags) and Alpine (`alpine` tag) for a smaller footprint. Both use a slim runtime base and ship a container healthcheck out of the box.
+
 __!WARNING!__ As of the time of this writing, you need a paid plan (Mail Plus, Proton Unlimited or Proton for Business) to be able to log in. It won't work with a free account.
 
 ![Logo Proton Mail Bridge docker](https://raw.githubusercontent.com/asyncura/ProtonMailBridgeDocker/master/logo.png "Merci à Korben pour le logo!")
@@ -39,8 +41,9 @@ docker run -d --name=protonmail_bridge -v /path/to/your/volume/storage:/root -p 
 **OR** (docker compose version):
 ```bash
 wget https://raw.githubusercontent.com/asyncura/ProtonMailBridgeDocker/master/compose.yaml
-docker-compose up -d
+docker compose up -d
 ```
+(For the Alpine flavour, use [compose.alpine.yaml](https://raw.githubusercontent.com/asyncura/ProtonMailBridgeDocker/master/compose.alpine.yaml) instead.)
 
 **(Optional)** Make sure the container is running:
 ```bash
@@ -55,7 +58,7 @@ docker container logs protonmail_bridge
 ```
 **OR** (docker compose version):
 ```bash
-docker-compose logs
+docker compose logs
 ```
 
 ## Setup
@@ -63,10 +66,6 @@ docker-compose logs
 Now, you need to open a bash terminal on the current running container and use the Proton Bridge interactive command line:
 ```bash
 docker exec -it protonmail_bridge /bin/bash
-```
-**OR** for the Alpine version:
-```bash
-docker exec -it protonmail_bridge /bin/bash  # If you're using the Alpine tag
 ```
 ```
 # First we need to kill the default bridge startup instance (only one instance of bridge can run at the same time)
@@ -148,7 +147,7 @@ docker container restart protonmail_bridge
 ```
 **OR** (docker compose version):
 ```bash
-docker-compose restart
+docker compose restart
 ```
 
 **(Optional)** You can check the bridge command line output with:
@@ -200,6 +199,7 @@ The SMTP server is now available from TCP port 12025 on your server's LAN IP add
 
 ## Changelog
 
+* 2026/07/03: complete overhaul: updated to Proton Mail Bridge v3.25.0, much smaller runtime images (`debian:trixie-slim` / `alpine:3` instead of full golang images), multi-arch builds (amd64 + arm64), container healthcheck, graceful shutdown on `docker stop`, CI only rebuilds when a new bridge version is released, deduplicated the Alpine build (now `Dockerfile.alpine` sharing the root context).
 * 2026/02/09: updated to Proton Mail Bridge v3.21.2
 * 2025/02/28: updated to Proton Mail Bridge v3.18.0, added environment variables CONTAINER_SMTP_PORT (default set to 25) and CONTAINER_IMAP_PORT (default set to 143), change this only if you have another MTA on the same docker network to prevent port conflict.
 * 2025/02/21: updated to Proton Mail Bridge v3.17.0
@@ -214,33 +214,38 @@ The SMTP server is now available from TCP port 12025 on your server's LAN IP add
 
 ### Automated Builds
 This repository uses GitHub Actions to automatically build and push Docker images to both GitHub Container Registry (ghcr.io) and DockerHub. The workflow:
-1. Runs daily at midnight
-2. Fetches the latest version of Proton Mail Bridge from the GitHub API
-3. Builds both Debian and Alpine Docker images
+1. Runs daily, and also on pushes to master that touch the build files (manual runs can pin a version)
+2. Fetches the latest version of Proton Mail Bridge from the GitHub API and skips the build if that version is already published on ghcr.io
+3. Builds both Debian and Alpine Docker images for `linux/amd64` and `linux/arm64`
 4. Tags them appropriately:
    - Debian: `latest`, `debian`, `<version>`, `<version>-debian`
    - Alpine: `alpine`, `<version>-alpine`
 5. Pushes them to ghcr.io and DockerHub (using GitHub secrets for DockerHub authentication)
-6. Updates the README.md files with the new version information
+6. Prepends the new version to the README.md changelog
 
 ### Manual Builds
 For local development and testing, you can use the build.sh script:
 ```bash
-# Build with the latest version from GitHub:
+# Build both flavours with the latest version from GitHub:
 ./build.sh
 
 # Build with a specific version:
-./build.sh -v v3.19.0
+./build.sh -v v3.25.0
+
+# Build and push to ghcr.io without prompting:
+./build.sh -p
 ```
 
-For more details on Docker, see: [Docker documentation](https://docs.docker.com/language/python/containerize/)
+Or build directly with docker:
 ```bash
-# Local tests:
-docker pull golang:bookworm
-
 git clone https://github.com/asyncura/ProtonMailBridgeDocker.git
-cd /path/to/ProtonMailBridgeDocker/
-docker build --build-arg ENV_PROTONMAIL_BRIDGE_VERSION=v3.19.0 --tag=ghcr.io/asyncura/proton-mail-bridge .
+cd ProtonMailBridgeDocker/
+
+# Debian flavour (default):
+docker build --build-arg ENV_PROTONMAIL_BRIDGE_VERSION=v3.25.0 --tag=ghcr.io/asyncura/proton-mail-bridge .
+# Alpine flavour:
+docker build --file Dockerfile.alpine --build-arg ENV_PROTONMAIL_BRIDGE_VERSION=v3.25.0 --tag=ghcr.io/asyncura/proton-mail-bridge:alpine .
+
 docker images | grep proton-mail
 
 docker run -it --rm --entrypoint /bin/bash ghcr.io/asyncura/proton-mail-bridge:latest
@@ -285,7 +290,7 @@ nslookup protonmail-bridge-ix-chart.ix-protonmail-bridge.svc.cluster.local 172.1
 
 There is a [testing branch](https://github.com/asyncura/ProtonMailBridgeDocker/tree/testing) available if you want to submit a patch.
 
-An [Alpine Linux](https://www.alpinelinux.org/) version for a small image base footprint is available using the `alpine` tag. The source code for the Alpine version is in the [Alpine directory](https://github.com/asyncura/ProtonMailBridgeDocker/tree/master/Alpine).
+An [Alpine Linux](https://www.alpinelinux.org/) version for a small image base footprint is available using the `alpine` tag. It is built from [Dockerfile.alpine](https://github.com/asyncura/ProtonMailBridgeDocker/blob/master/Dockerfile.alpine) and shares the same entrypoint and configuration as the Debian version.
 
 ## License
 
@@ -306,4 +311,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ## Sources:
 
-Made from [Debian 12 (bookworm) Go image](https://hub.docker.com/_/golang/) and latest [Proton Mail Bridge sources](https://github.com/ProtonMail/proton-bridge/tree/master)
+Built with the official [Go image](https://hub.docker.com/_/golang/) from the latest [Proton Mail Bridge sources](https://github.com/ProtonMail/proton-bridge), running on [debian:trixie-slim](https://hub.docker.com/_/debian) (default) or [alpine:3](https://hub.docker.com/_/alpine) (alpine tag).

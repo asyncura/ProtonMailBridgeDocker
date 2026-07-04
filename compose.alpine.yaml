@@ -1,6 +1,10 @@
+# Proton Mail Bridge - Alpine image (lightweight)
+# Note: expects the external docker network "network20" to exist:
+#   docker network create --subnet 172.20.0.0/16 network20
 services:
     protonmail-bridge:
         container_name: protonmail_bridge_alpine
+        image: ghcr.io/asyncura/proton-mail-bridge:alpine
         volumes:
             - mail_data:/root
         environment:
@@ -12,7 +16,6 @@ services:
         networks:
             - network20
         restart: unless-stopped
-        image: ghcr.io/asyncura/proton-mail-bridge:alpine
 networks:
     network20:
         external: true

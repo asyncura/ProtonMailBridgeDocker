@@ -152,3 +152,12 @@ jobs:
         with:
           commit_message: "Update to Proton Mail Bridge ${{ needs.check-version.outputs.version }}"
           file_pattern: "README.md"
+
+      - name: Sync README to Docker Hub description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/proton-mail-bridge
+          short-description: "Proton Mail Bridge (CLI) in Docker - local SMTP/IMAP server for your Proton account"
+          readme-filepath: ./README.md

@@ -202,6 +202,7 @@ The SMTP server is then reachable on TCP port 12025 on your server's LAN IP addr
 
 ## Changelog
 
+* 2026/08/27: updated to Proton Mail Bridge v3.26.0
 * 2026/07/03: complete overhaul: updated to Proton Mail Bridge v3.25.0, much smaller runtime images (`debian:trixie-slim` / `alpine:3` instead of full golang images), multi-arch builds (amd64 + arm64), container healthcheck, graceful shutdown on `docker stop`, CI only rebuilds when a new bridge version is released, deduplicated the Alpine build (now `Dockerfile.alpine` sharing the root context).
 * 2026/02/09: updated to Proton Mail Bridge v3.21.2
 * 2025/02/28: updated to Proton Mail Bridge v3.18.0, added environment variables CONTAINER_SMTP_PORT (default set to 25) and CONTAINER_IMAP_PORT (default set to 143), change this only if you have another MTA on the same docker network to prevent port conflict.

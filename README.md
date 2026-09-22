@@ -202,6 +202,7 @@ The SMTP server is then reachable on TCP port 12025 on your server's LAN IP addr
 
 ## Changelog
 
+* 2026/09/22: updated to Proton Mail Bridge v3.27.0
 * 2026/08/27: updated to Proton Mail Bridge v3.26.0
 * 2026/07/03: complete overhaul: updated to Proton Mail Bridge v3.25.0, much smaller runtime images (`debian:trixie-slim` / `alpine:3` instead of full golang images), multi-arch builds (amd64 + arm64), container healthcheck, graceful shutdown on `docker stop`, CI only rebuilds when a new bridge version is released, deduplicated the Alpine build (now `Dockerfile.alpine` sharing the root context).
 * 2026/02/09: updated to Proton Mail Bridge v3.21.2
